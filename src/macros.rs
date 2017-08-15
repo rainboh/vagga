@@ -11,11 +11,12 @@ macro_rules! try_msg {
 #[macro_export]
 macro_rules! tuple_struct_decode {
     ($name:ident) => {
-        impl ::rustc_serialize::Decodable for $name {
-            fn decode<D: ::rustc_serialize::Decoder>(d: &mut D)
-                -> Result<$name, D::Error>
+
+        impl ::serde::Deserialize<'static> for $name {
+            fn deserialize<'x, D: ::serde::Deserializer<'x>>(d: &mut D)
+                -> Result<Step, D::Error>
             {
-                ::rustc_serialize::Decodable::decode(d).map($name)
+                unimplemented!();
             }
         }
     }

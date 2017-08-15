@@ -29,7 +29,7 @@ impl GemInstall {
     }
 }
 
-#[derive(RustcDecodable, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct GemConfig {
     pub install_ruby: bool,
     pub gem_exe: Option<String>,
@@ -45,7 +45,7 @@ impl GemConfig {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct GemBundle {
     pub gemfile: PathBuf,
     pub without: Vec<String>,

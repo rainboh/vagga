@@ -6,7 +6,7 @@ use std::path::Path;
 
 use argparse::{ArgumentParser};
 use unshare::{Command};
-use rustc_serialize::json;
+use serde_json;
 
 use config::command::CapsuleInfo;
 
@@ -129,7 +129,7 @@ pub fn commandline_cmd(_cmd_name: &str, command: &CapsuleInfo,
     cmd.env_clear();
     copy_env_vars(&mut cmd, &wrapper.settings);
     let ref s = wrapper.settings;
-    cmd.env("VAGGA_SETTINGS", json::encode(&Settings {
+    cmd.env("VAGGA_SETTINGS", serde_json::to_string(&Settings {
             version_check: s.version_check,
             proxy_env_vars: s.proxy_env_vars,
             ubuntu_mirror: &s.ubuntu_mirror,

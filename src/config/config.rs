@@ -19,7 +19,7 @@ use super::range::Range;
 use super::validate::validate_config;
 use super::version::MinimumVagga;
 
-#[derive(RustcDecodable)]
+#[derive(Deserialize)]
 pub struct Config {
     pub minimum_vagga: Option<String>,
     pub mixins: Vec<String>,

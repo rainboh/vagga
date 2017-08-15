@@ -9,7 +9,6 @@ extern crate typenum;
 extern crate libc;
 extern crate nix;
 extern crate rand;
-extern crate rustc_serialize;
 extern crate env_logger;
 extern crate argparse;
 extern crate quire;
@@ -28,11 +27,13 @@ extern crate digest_writer;
 extern crate itertools;
 extern crate git2;
 extern crate path_filter;
+extern crate serde;
 #[macro_use] extern crate matches;
 #[macro_use] extern crate mopa;
 #[macro_use] extern crate log;
 #[macro_use] extern crate quick_error;
 #[macro_use] extern crate lazy_static;
+#[macro_use] extern crate serde_derive;
 
 #[cfg(feature="containers")]
 extern crate unshare;

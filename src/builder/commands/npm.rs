@@ -8,7 +8,7 @@ use libmount::BindMount;
 use quick_error::ResultExt;
 use quire::validate as V;
 use regex::Regex;
-use rustc_serialize::json::Json;
+use serde_json::{Value as Json, from_reader};
 use unshare::{Stdio};
 
 use builder::commands::generic::{command, run};
@@ -26,7 +26,7 @@ lazy_static! {
 }
 
 
-#[derive(RustcDecodable, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct NpmConfig {
     pub install_node: bool,
     pub install_yarn: bool,
@@ -56,7 +56,7 @@ impl NpmInstall {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct NpmDependencies {
     pub file: PathBuf,
     pub package: bool,
@@ -90,7 +90,7 @@ impl Default for NpmConfig {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct YarnDependencies {
     pub dir: PathBuf,
     pub production: bool,
@@ -220,7 +220,7 @@ pub fn npm_deps(distro: &mut Box<Distribution>, ctx: &mut Context,
 
     let json = File::open(&Path::new("/work").join(&info.file))
         .map_err(|e| format!("Error opening file {:?}: {}", info.file, e))
-        .and_then(|mut f| Json::from_reader(&mut f)
+        .and_then(|mut f| from_reader(&mut f)
         .map_err(|e| format!("Error parsing json {:?}: {}", info.file, e)))?;
     let mut packages = vec![];
 
@@ -337,7 +337,7 @@ impl BuildStep for NpmDependencies {
     {
         let path = Path::new("/work").join(&self.file);
         File::open(&path).map_err(|e| VersionError::Io(e, path.clone()))
-        .and_then(|mut f| Json::from_reader(&mut f)
+        .and_then(|mut f| from_reader(&mut f)
             .map_err(|e| VersionError::Json(e, path.to_path_buf())))
         .map(|data| {
             if self.package {
@@ -434,7 +434,7 @@ impl BuildStep for YarnDependencies {
         let lock_file = Path::new("/work").join(&self.dir).join("yarn.lock");
         let package = Path::new("/work").join(&self.dir).join("package.json");
         if lock_file.exists() {
-            let data = Json::from_reader(
+            let data = from_reader(
                 &mut File::open(&package).context(&package)?)
                 .context(&package)?;
             let patterns = get_all_patterns(&lock_file)?;

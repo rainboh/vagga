@@ -58,19 +58,8 @@ const COMMANDS: &'static [&'static str] = &[
     "ComposerConfig",
 ];
 
-#[derive(RustcEncodable, RustcDecodable, Debug, Clone)]
-pub struct PacmanRepo {
-    pub name: String,
-    pub url: String,
-}
 
-#[derive(RustcEncodable, RustcDecodable, Debug, Clone)]
-pub struct FileInfo {
-    pub name: PathBuf,
-    pub contents: String,
-}
-
-#[derive(Clone, RustcDecodable, RustcEncodable, Debug)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct Copy {
     pub source: PathBuf,
     pub path: PathBuf,
@@ -203,12 +192,9 @@ fn decode_step<D: Decoder>(options: &[&str], index: usize, d: &mut D)
     }
 }
 
-impl Decodable for Step {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Step, D::Error> {
-        Ok(d.read_enum("BuildStep", |d| {
-            d.read_enum_variant(&COMMANDS, |d, index| {
-                decode_step(&COMMANDS, index, d)
-            })
-        })?)
+impl Deserialize for Step {
+    fn deserialize<D: Deserializer>(d: &mut D) -> Result<Step, D::Error> {
+        unimplemented!();
+        //Ok(d.deserialize_enum("BuildStep", COMMANDS, d))
     }
 }

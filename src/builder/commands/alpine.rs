@@ -29,7 +29,7 @@ const VERSION_WITH_PHP5: &'static str = "v3.4";
 pub struct Alpine(String);
 tuple_struct_decode!(Alpine);
 
-#[derive(Debug, RustcDecodable)]
+#[derive(Debug, Deserialize)]
 pub struct AlpineRepo {
     url: Option<String>,
     branch: Option<String>,

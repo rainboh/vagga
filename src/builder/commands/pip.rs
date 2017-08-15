@@ -12,7 +12,7 @@ use file_util::Dir;
 use build_step::{BuildStep, VersionError, StepError, Digest, Config, Guard};
 
 
-#[derive(RustcDecodable, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct PipConfig {
     pub find_links: Vec<String>,
     pub index_urls: Vec<String>,

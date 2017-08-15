@@ -6,7 +6,7 @@ use std::os::unix;
 use unshare::{Command};
 use scan_dir::{self, ScanDir};
 use regex::Regex;
-use rustc_serialize::json::Json;
+use serde_json::{Value as Json, from_reader};
 use quire::validate as V;
 
 use super::super::context::{Context};
@@ -41,7 +41,7 @@ const LOCKFILE_RELEVANT_KEYS: &'static [&'static str] = &[
 
 const CONF_D: &'static str = "conf.d";
 
-#[derive(RustcDecodable, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ComposerConfig {
     // It is used 'runtime' instead of 'php' in order to support hhvm in the future
     pub install_runtime: bool,
@@ -74,7 +74,7 @@ impl ComposerInstall {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct ComposerDependencies {
     pub working_dir: Option<String>,
     pub dev: bool,
@@ -491,7 +491,7 @@ fn get<'x>(dic: &'x Json, key: &str) -> &'x Json {
 
 fn hash_lock_file(path: &Path, hash: &mut Digest) -> Result<(), VersionError> {
     File::open(&path).map_err(|e| VersionError::Io(e, path.to_path_buf()))
-    .and_then(|mut f| Json::from_reader(&mut f)
+    .and_then(|mut f| from_reader(&mut f)
         .map_err(|e| VersionError::Json(e, path.to_path_buf())))
     .and_then(|data| {
         let packages = data.find("packages")
@@ -530,7 +530,7 @@ impl BuildStep for ComposerDependencies {
 
         let path = base_path.join("composer.json");
         File::open(&path).map_err(|e| VersionError::Io(e, path.clone()))
-        .and_then(|mut f| Json::from_reader(&mut f)
+        .and_then(|mut f| from_reader(&mut f)
             .map_err(|e| VersionError::Json(e, path.to_path_buf())))
         .map(|data| {
             // Jsons are sorted so should be hash as string predictably

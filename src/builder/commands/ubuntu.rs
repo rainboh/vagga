@@ -38,7 +38,7 @@ impl Ubuntu {
     }
 }
 
-#[derive(RustcDecodable, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct UbuntuRelease {
     pub codename: Option<String>,
     pub version: Option<String>,
@@ -60,7 +60,7 @@ impl UbuntuRelease {
     }
 }
 
-#[derive(Debug, RustcDecodable)]
+#[derive(Debug, Deserialize)]
 pub struct UbuntuUniverse;
 
 impl UbuntuUniverse {
@@ -79,7 +79,7 @@ impl UbuntuPPA {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct UbuntuRepo {
     pub url: Option<String>,
     pub suite: Option<String>,
@@ -97,7 +97,7 @@ impl UbuntuRepo {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct AptTrust {
     pub server: Option<String>,
     pub keys: Vec<String>,

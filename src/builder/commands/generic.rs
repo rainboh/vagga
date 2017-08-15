@@ -31,7 +31,7 @@ impl Cmd {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct RunAs {
     pub user_id: u32,
     pub group_id: u32,
