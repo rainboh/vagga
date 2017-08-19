@@ -43,6 +43,6 @@ impl Settings {
 impl FromStr for Settings {
     type Err = ();
     fn from_str(val: &str) -> Result<Settings, ()> {
-        serde_json::from_string(val).map_err(|_| ())
+        serde_json::from_str(val).map_err(|_| ())
     }
 }

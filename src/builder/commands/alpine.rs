@@ -25,9 +25,8 @@ const VERSION_WITH_PHP5: &'static str = "v3.4";
 
 
 // Build Steps
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Alpine(String);
-tuple_struct_decode!(Alpine);
 
 #[derive(Debug, Deserialize)]
 pub struct AlpineRepo {

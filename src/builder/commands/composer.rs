@@ -64,9 +64,8 @@ impl ComposerConfig {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct ComposerInstall(Vec<String>);
-tuple_struct_decode!(ComposerInstall);
 
 impl ComposerInstall {
     pub fn config() -> V::Sequence<'static> {
@@ -486,15 +485,15 @@ impl BuildStep for ComposerInstall {
 fn get<'x>(dic: &'x Json, key: &str) -> &'x Json {
     // TODO(tailhook) is there a better way for the following?
     let x: &'static Json = unsafe { ::std::mem::transmute(&Json::Null) };
-    dic.find(key).unwrap_or(x)
+    dic.get(key).unwrap_or(x)
 }
 
 fn hash_lock_file(path: &Path, hash: &mut Digest) -> Result<(), VersionError> {
     File::open(&path).map_err(|e| VersionError::Io(e, path.to_path_buf()))
     .and_then(|mut f| from_reader(&mut f)
         .map_err(|e| VersionError::Json(e, path.to_path_buf())))
-    .and_then(|data| {
-        let packages = data.find("packages")
+    .and_then(|data: Json| {
+        let packages = data.get("packages")
             .ok_or("Missing 'packages' property from composer.lock".to_owned())?;
         let packages = packages.as_array()
             .ok_or("'packages' property is not an array".to_owned())?;

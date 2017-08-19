@@ -1,10 +1,10 @@
 use std::rc::Rc;
 use std::path::PathBuf;
 
-use quire::validate as V;
-use libc::{uid_t, gid_t};
-use rustc_serialize::{Decodable, Decoder};
 use builder::commands as cmd;
+use libc::{uid_t, gid_t};
+use quire::validate as V;
+use serde::de::{Deserializer, Deserialize};
 
 use build_step::{Step, BuildStep};
 
@@ -136,6 +136,7 @@ fn step<T: BuildStep + 'static, E>(val: Result<T, E>)
     val.map(|x| Step(Rc::new(x) as Rc<BuildStep>))
 }
 
+/*
 fn decode_step<D: Decoder>(options: &[&str], index: usize, d: &mut D)
     -> Result<Step, D::Error>
 {
@@ -191,9 +192,10 @@ fn decode_step<D: Decoder>(options: &[&str], index: usize, d: &mut D)
         step_name => panic!("Step {} is not yet implemented", step_name),
     }
 }
+*/
 
-impl Deserialize for Step {
-    fn deserialize<D: Deserializer>(d: &mut D) -> Result<Step, D::Error> {
+impl<'a> Deserialize<'a> for Step {
+    fn deserialize<D: Deserializer<'a>>(d: D) -> Result<Step, D::Error> {
         unimplemented!();
         //Ok(d.deserialize_enum("BuildStep", COMMANDS, d))
     }

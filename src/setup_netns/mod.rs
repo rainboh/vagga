@@ -177,7 +177,7 @@ fn setup_bridge_namespace(args: Vec<String>) {
             }
         }
     }
-    let ports: Vec<(u16, String, u16)> = serde_json::to_string(&ports_str)
+    let ports: Vec<(u16, String, u16)> = serde_json::from_str(&ports_str)
         .ok().expect("Port-forwards JSON is invalid");
     wait_interface_or_exit(&interface);
 

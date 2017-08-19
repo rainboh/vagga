@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use libc::uid_t;
-use rustc_serialize::{Decoder, Decodable};
+use serde::de::{Deserializer, Deserialize};
 
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
@@ -14,9 +14,11 @@ trait StringError<T> {
     fn create_error(&self, value: String) -> T;
 }
 
-impl Decodable for Range {
-    fn decode<D:Decoder>(d: &mut D) -> Result<Range, D::Error>
+impl<'a> Deserialize<'a> for Range {
+    fn deserialize<D: Deserializer<'a>>(d: D) -> Result<Range, D::Error>
     {
+        unimplemented!();
+        /*
         d.read_str().and_then(|val| {
             FromStr::from_str(&val[..])
             .map(|num| Range::new(num, num))
@@ -30,6 +32,7 @@ impl Decodable for Range {
                 ))
             })
         })
+        */
     }
 }
 

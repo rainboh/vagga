@@ -22,9 +22,8 @@ use container::util::clean_dir;
 
 
 // Build Steps
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Ubuntu(String);
-tuple_struct_decode!(Ubuntu);
 
 struct EMDParams {
     needs_universe: bool,
@@ -69,9 +68,8 @@ impl UbuntuUniverse {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct UbuntuPPA(String);
-tuple_struct_decode!(UbuntuPPA);
 
 impl UbuntuPPA {
     pub fn config() -> V::Scalar {

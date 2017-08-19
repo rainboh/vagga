@@ -10,10 +10,8 @@ use nix::unistd::{isatty, dup};
 
 
 mod ffi {
-    use libc::{c_int};
-
-    pub static TIOCSPGRP: c_int = 0x5410;
-    pub static TIOCGPGRP: c_int = 0x540F;
+    pub static TIOCSPGRP: u64 = 0x5410;
+    pub static TIOCGPGRP: u64 = 0x540F;
 }
 
 

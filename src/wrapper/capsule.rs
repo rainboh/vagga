@@ -62,7 +62,7 @@ const BUSYBOX_COMMANDS: &'static [&'static str] = &[
     "whois", "xargs", "xzcat", "yes", "zcat"
 ];
 
-#[derive(RustcEncodable, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct Settings<'a> {
     pub version_check: bool,
     pub proxy_env_vars: bool,

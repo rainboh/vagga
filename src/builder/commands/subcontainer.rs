@@ -15,9 +15,8 @@ use builder::error::StepError as E;
 use builder::dns::revert_name_files;
 
 // Build Steps
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Container(String);
-tuple_struct_decode!(Container);
 
 impl Container {
     pub fn config() -> V::Scalar {

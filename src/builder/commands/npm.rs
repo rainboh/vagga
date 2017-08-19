@@ -46,9 +46,8 @@ impl NpmConfig {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct NpmInstall(Vec<String>);
-tuple_struct_decode!(NpmInstall);
 
 impl NpmInstall {
     pub fn config() -> V::Sequence<'static> {
@@ -186,14 +185,14 @@ fn scan_dic(json: &Json, key: &str,
     packages: &mut Vec<String>, features: &mut Vec<packages::Package>)
     -> Result<(), StepError>
 {
-    match json.find(key) {
+    match json.get(key) {
         Some(&Json::Object(ref ob)) => {
             for (k, v) in ob {
                 if !v.is_string() {
                     return Err(StepError::Compat(format!(
                         "Package {:?} has wrong version {:?}", k, v)));
                 }
-                let s = v.as_string().unwrap();
+                let s = v.as_str().unwrap();
                 parse_feature(&s, features);
                 packages.push(format!("{}@{}", k, s));
                 // TODO(tailhook) check the feature
@@ -272,11 +271,11 @@ pub fn list(ctx: &mut Context) -> Result<(), StepError> {
 }
 
 fn npm_hash_deps(data: &Json, key: &str, hash: &mut Digest) {
-    let deps = data.find(key);
+    let deps = data.get(key);
     if let Some(&Json::Object(ref ob)) = deps {
         // Note the BTree is sorted on its own
         for (key, val) in ob {
-            hash.field(key, val.as_string().unwrap_or("*"));
+            hash.field(key, val.as_str().unwrap_or("*"));
         }
     }
 }
@@ -412,7 +411,7 @@ fn check_deps(deps: Option<&Json>, patterns: &HashSet<String>) -> bool {
         None => return true,
     };
     for (key, value) in items.iter() {
-        let val = match value.as_string() {
+        let val = match value.as_str() {
             Some(x) => x,
             None => continue,
         };
@@ -434,25 +433,25 @@ impl BuildStep for YarnDependencies {
         let lock_file = Path::new("/work").join(&self.dir).join("yarn.lock");
         let package = Path::new("/work").join(&self.dir).join("package.json");
         if lock_file.exists() {
-            let data = from_reader(
+            let data: Json = from_reader(
                 &mut File::open(&package).context(&package)?)
                 .context(&package)?;
             let patterns = get_all_patterns(&lock_file)?;
 
             // This is what yarn as of v0.23.0, i.e. checks whether all
             // dependencies are in lockfile
-            if !check_deps(data.find("dependencies"), &patterns) {
+            if !check_deps(data.get("dependencies"), &patterns) {
                 return Err(VersionError::New);
             }
             npm_hash_deps(&data, "dependencies", hash);
             if !self.production {
-                if !check_deps(data.find("devDependencies"), &patterns) {
+                if !check_deps(data.get("devDependencies"), &patterns) {
                     return Err(VersionError::New);
                 }
                 npm_hash_deps(&data, "devDependencies", hash);
             }
             if self.optional {
-                if !check_deps(data.find("optionalDependencies"), &patterns) {
+                if !check_deps(data.get("optionalDependencies"), &patterns) {
                     return Err(VersionError::New);
                 }
                 npm_hash_deps(&data, "optionalDependencies", hash);
