@@ -1,10 +1,12 @@
+use std::fmt;
 use std::rc::Rc;
 use std::path::PathBuf;
 
 use builder::commands as cmd;
 use libc::{uid_t, gid_t};
 use quire::validate as V;
-use serde::de::{Deserializer, Deserialize};
+use serde::de::{self, Deserializer, Deserialize};
+use serde::de::{VariantAccess, Visitor, EnumAccess};
 
 use build_step::{Step, BuildStep};
 
@@ -58,16 +60,58 @@ const COMMANDS: &'static [&'static str] = &[
     "ComposerConfig",
 ];
 
-
-#[derive(Clone, Deserialize, Serialize, Debug)]
-pub struct Copy {
-    pub source: PathBuf,
-    pub path: PathBuf,
-    pub owner_uid: Option<uid_t>,
-    pub owner_gid: Option<gid_t>,
-    pub ignore_regex: String,
+pub enum CommandName {
+    Alpine,
+    AlpineRepo,
+    Ubuntu,
+    UbuntuRepo,
+    UbuntuRelease,
+    UbuntuPPA,
+    UbuntuUniverse,
+    AptTrust,
+    Repo,
+    Install,
+    BuildDeps,
+    Git,
+    GitInstall,
+    GitDescribe,
+    PipConfig,
+    Py2Install,
+    Py2Requirements,
+    Py3Install,
+    Py3Requirements,
+    Tar,
+    TarInstall,
+    Unzip,
+    Sh,
+    Cmd,
+    RunAs,
+    Env,
+    Text,
+    Copy,
+    Download,
+    EnsureDir,
+    CacheDirs,
+    EmptyDir,
+    Remove,
+    Depends,
+    Container,
+    Build,
+    SubConfig,
+    NpmConfig,
+    NpmDependencies,
+    YarnDependencies,
+    NpmInstall,
+    GemInstall,
+    GemBundle,
+    GemConfig,
+    ComposerInstall,
+    ComposerDependencies,
+    ComposerConfig,
 }
 
+pub struct NameVisitor;
+pub struct StepVisitor;
 
 pub fn builder_validator<'x>() -> V::Enum<'x> {
     V::Enum::new()
@@ -136,67 +180,146 @@ fn step<T: BuildStep + 'static, E>(val: Result<T, E>)
     val.map(|x| Step(Rc::new(x) as Rc<BuildStep>))
 }
 
-/*
-fn decode_step<D: Decoder>(options: &[&str], index: usize, d: &mut D)
-    -> Result<Step, D::Error>
-{
-    match options[index] {
-        "Alpine" => step(cmd::alpine::Alpine::decode(d)),
-        "AlpineRepo" => step(cmd::alpine::AlpineRepo::decode(d)),
-        "Ubuntu" => step(cmd::ubuntu::Ubuntu::decode(d)),
-        "UbuntuRepo" => step(cmd::ubuntu::UbuntuRepo::decode(d)),
-        "UbuntuRelease" => step(cmd::ubuntu::UbuntuRelease::decode(d)),
-        "UbuntuPPA" => step(cmd::ubuntu::UbuntuPPA::decode(d)),
-        "UbuntuUniverse" => step(cmd::ubuntu::UbuntuUniverse::decode(d)),
-        "AptTrust" => step(cmd::ubuntu::AptTrust::decode(d)),
-        "Repo" => step(cmd::packaging::Repo::decode(d)),
-        "Install" => step(cmd::packaging::Install::decode(d)),
-        "BuildDeps" => step(cmd::packaging::BuildDeps::decode(d)),
-        "Git" => step(cmd::vcs::Git::decode(d)),
-        "GitInstall" => step(cmd::vcs::GitInstall::decode(d)),
-        "GitDescribe" => step(cmd::vcs::GitDescribe::decode(d)),
-        "PipConfig" => step(cmd::pip::PipConfig::decode(d)),
-        "Py2Install" => step(cmd::pip::Py2Install::decode(d)),
-        "Py2Requirements" => step(cmd::pip::Py2Requirements::decode(d)),
-        "Py3Install" => step(cmd::pip::Py3Install::decode(d)),
-        "Py3Requirements" => step(cmd::pip::Py3Requirements::decode(d)),
-        "Tar" => step(cmd::tarcmd::Tar::decode(d)),
-        "TarInstall" => step(cmd::tarcmd::TarInstall::decode(d)),
-        "Unzip" => step(cmd::unzip::Unzip::decode(d)),
-        "Sh" => step(cmd::generic::Sh::decode(d)),
-        "Cmd" => step(cmd::generic::Cmd::decode(d)),
-        "RunAs" => step(cmd::generic::RunAs::decode(d)),
-        "Env" => step(cmd::generic::Env::decode(d)),
-        "Text" => step(cmd::text::Text::decode(d)),
-        "Copy" => step(cmd::copy::Copy::decode(d)),
-        "Download" => step(cmd::download::Download::decode(d)),
-        "EnsureDir" => step(cmd::dirs::EnsureDir::decode(d)),
-        "CacheDirs" => step(cmd::dirs::CacheDirs::decode(d)),
-        "EmptyDir" => step(cmd::dirs::EmptyDir::decode(d)),
-        "Remove" => step(cmd::dirs::Remove::decode(d)),
-        "Depends" => step(cmd::copy::Depends::decode(d)),
-        "Container" => step(cmd::subcontainer::Container::decode(d)),
-        "Build" => step(cmd::subcontainer::Build::decode(d)),
-        "SubConfig" => step(cmd::subcontainer::SubConfig::decode(d)),
-        "NpmConfig" => step(cmd::npm::NpmConfig::decode(d)),
-        "NpmDependencies" => step(cmd::npm::NpmDependencies::decode(d)),
-        "YarnDependencies" => step(cmd::npm::YarnDependencies::decode(d)),
-        "NpmInstall" => step(cmd::npm::NpmInstall::decode(d)),
-        "GemInstall" => step(cmd::gem::GemInstall::decode(d)),
-        "GemBundle" => step(cmd::gem::GemBundle::decode(d)),
-        "GemConfig" => step(cmd::gem::GemConfig::decode(d)),
-        "ComposerInstall" => step(cmd::composer::ComposerInstall::decode(d)),
-        "ComposerDependencies"
-        => step(cmd::composer::ComposerDependencies::decode(d)),
-        "ComposerConfig" => step(cmd::composer::ComposerConfig::decode(d)),
-        step_name => panic!("Step {} is not yet implemented", step_name),
+impl<'a> Visitor<'a> for NameVisitor {
+    type Value = CommandName;
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "build step is one of {}", COMMANDS.join(", "))
+    }
+    fn visit_str<E: de::Error>(self, val: &str) -> Result<CommandName, E> {
+        use self::CommandName::*;
+        let res = match val {
+            "Alpine" => Alpine,
+            "AlpineRepo" => AlpineRepo,
+            "Ubuntu" => Ubuntu,
+            "UbuntuRepo" => UbuntuRepo,
+            "UbuntuRelease" => UbuntuRelease,
+            "UbuntuPPA" => UbuntuPPA,
+            "UbuntuUniverse" => UbuntuUniverse,
+            "AptTrust" => AptTrust,
+            "Repo" => Repo,
+            "Install" => Install,
+            "BuildDeps" => BuildDeps,
+            "Git" => Git,
+            "GitInstall" => GitInstall,
+            "GitDescribe" => GitDescribe,
+            "PipConfig" => PipConfig,
+            "Py2Install" => Py2Install,
+            "Py2Requirements" => Py2Requirements,
+            "Py3Install" => Py3Install,
+            "Py3Requirements" => Py3Requirements,
+            "Tar" => Tar,
+            "TarInstall" => TarInstall,
+            "Unzip" => Unzip,
+            "Sh" => Sh,
+            "Cmd" => Cmd,
+            "RunAs" => RunAs,
+            "Env" => Env,
+            "Text" => Text,
+            "Copy" => Copy,
+            "Download" => Download,
+            "EnsureDir" => EnsureDir,
+            "CacheDirs" => CacheDirs,
+            "EmptyDir" => EmptyDir,
+            "Remove" => Remove,
+            "Depends" => Depends,
+            "Container" => Container,
+            "Build" => Build,
+            "SubConfig" => SubConfig,
+            "NpmConfig" => NpmConfig,
+            "NpmDependencies" => NpmDependencies,
+            "YarnDependencies" => YarnDependencies,
+            "NpmInstall" => NpmInstall,
+            "GemInstall" => GemInstall,
+            "GemBundle" => GemBundle,
+            "GemConfig" => GemConfig,
+            "ComposerInstall" => ComposerInstall,
+            "ComposerDependencies" => ComposerDependencies,
+            "ComposerConfig" => ComposerConfig,
+            _ => return Err(E::custom("invalid build step")),
+        };
+        Ok(res)
     }
 }
-*/
+
+impl<'a> Visitor<'a> for StepVisitor {
+    type Value = Step;
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "build step is one of {}", COMMANDS.join(", "))
+    }
+    fn visit_enum<A>(self, data: A) -> Result<Step, A::Error>
+        where A: EnumAccess<'a>,
+    {
+        use self::CommandName::*;
+        let (tag, v) = data.variant()?;
+        match tag {
+            Alpine => step(v.newtype_variant::<cmd::alpine::Alpine>()),
+            AlpineRepo => step(v.newtype_variant::<cmd::alpine::AlpineRepo>()),
+            Ubuntu => step(v.newtype_variant::<cmd::ubuntu::Ubuntu>()),
+            /*
+            UbuntuRepo => step(cmd::ubuntu::UbuntuRepo::deserialize(d)),
+            UbuntuRelease => step(cmd::ubuntu::UbuntuRelease::deserialize(d)),
+            UbuntuPPA => step(cmd::ubuntu::UbuntuPPA::deserialize(d)),
+            UbuntuUniverse
+            => step(cmd::ubuntu::UbuntuUniverse::deserialize(d)),
+            AptTrust => step(cmd::ubuntu::AptTrust::deserialize(d)),
+            Repo => step(cmd::packaging::Repo::deserialize(d)),
+            Install => step(cmd::packaging::Install::deserialize(d)),
+            BuildDeps => step(cmd::packaging::BuildDeps::deserialize(d)),
+            Git => step(cmd::vcs::Git::deserialize(d)),
+            GitInstall => step(cmd::vcs::GitInstall::deserialize(d)),
+            GitDescribe => step(cmd::vcs::GitDescribe::deserialize(d)),
+            PipConfig => step(cmd::pip::PipConfig::deserialize(d)),
+            Py2Install => step(cmd::pip::Py2Install::deserialize(d)),
+            Py2Requirements => step(cmd::pip::Py2Requirements::deserialize(d)),
+            Py3Install => step(cmd::pip::Py3Install::deserialize(d)),
+            Py3Requirements => step(cmd::pip::Py3Requirements::deserialize(d)),
+            Tar => step(cmd::tarcmd::Tar::deserialize(d)),
+            TarInstall => step(cmd::tarcmd::TarInstall::deserialize(d)),
+            Unzip => step(cmd::unzip::Unzip::deserialize(d)),
+            Sh => step(cmd::generic::Sh::deserialize(d)),
+            Cmd => step(cmd::generic::Cmd::deserialize(d)),
+            RunAs => step(cmd::generic::RunAs::deserialize(d)),
+            Env => step(cmd::generic::Env::deserialize(d)),
+            Text => step(cmd::text::Text::deserialize(d)),
+            Copy => step(cmd::copy::Copy::deserialize(d)),
+            Download => step(cmd::download::Download::deserialize(d)),
+            EnsureDir => step(cmd::dirs::EnsureDir::deserialize(d)),
+            CacheDirs => step(cmd::dirs::CacheDirs::deserialize(d)),
+            EmptyDir => step(cmd::dirs::EmptyDir::deserialize(d)),
+            Remove => step(cmd::dirs::Remove::deserialize(d)),
+            Depends => step(cmd::copy::Depends::deserialize(d)),
+            Container => step(cmd::subcontainer::Container::deserialize(d)),
+            Build => step(cmd::subcontainer::Build::deserialize(d)),
+            SubConfig => step(cmd::subcontainer::SubConfig::deserialize(d)),
+            NpmConfig => step(cmd::npm::NpmConfig::deserialize(d)),
+            NpmDependencies => step(cmd::npm::NpmDependencies::deserialize(d)),
+            YarnDependencies
+            => step(cmd::npm::YarnDependencies::deserialize(d)),
+            NpmInstall => step(cmd::npm::NpmInstall::deserialize(d)),
+            GemInstall => step(cmd::gem::GemInstall::deserialize(d)),
+            GemBundle => step(cmd::gem::GemBundle::deserialize(d)),
+            GemConfig => step(cmd::gem::GemConfig::deserialize(d)),
+            ComposerInstall
+            => step(cmd::composer::ComposerInstall::deserialize(d)),
+            ComposerDependencies
+            => step(cmd::composer::ComposerDependencies::deserialize(d)),
+            ComposerConfig
+            => step(cmd::composer::ComposerConfig::deserialize(d)),
+            */
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl<'a> Deserialize<'a> for CommandName {
+    fn deserialize<D: Deserializer<'a>>(d: D) -> Result<CommandName, D::Error>
+    {
+        d.deserialize_identifier(NameVisitor)
+    }
+}
 
 impl<'a> Deserialize<'a> for Step {
     fn deserialize<D: Deserializer<'a>>(d: D) -> Result<Step, D::Error> {
-        unimplemented!();
-        //Ok(d.deserialize_enum("BuildStep", COMMANDS, d))
+        d.deserialize_enum("BuildStep", COMMANDS, StepVisitor)
     }
 }
