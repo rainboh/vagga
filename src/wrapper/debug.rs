@@ -15,6 +15,7 @@ pub fn run_interactive_build_shell(wrapper: &Wrapper) -> i32 {
     capsule::symlink_busybox_commands()
         .map_err(|e| error!("{}", e)).ok();
 
+println!("run_interactive_build_shell: wrapper.project_root={:?}, wrapper.ext_settings={:?}", wrapper.project_root, wrapper.ext_settings);
     if let Err(text) = setup_base_filesystem(
         wrapper.project_root, wrapper.ext_settings)
     {

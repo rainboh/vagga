@@ -13,7 +13,7 @@ use config::read_settings::{read_settings, MergedSettings};
 mod debug;
 mod build;
 mod run;
-mod setup;
+pub mod setup;
 mod util;
 mod clean;
 mod pack;
@@ -35,6 +35,7 @@ pub struct Wrapper<'a> {
 
 
 pub fn run(input_args: Vec<String>) -> i32 {
+println!("wrapper run 1: input_args={:?}", input_args);
     let mut err = stderr();
     let mut cmd: String = "".to_string();
     let mut args: Vec<String> = Vec::new();
@@ -67,7 +68,9 @@ pub fn run(input_args: Vec<String>) -> i32 {
 
     let workdir = current_dir().unwrap();
 
+println!("wrapper run 2: workdir={:?}", workdir);
     let (config, project_root) = find_config_or_exit(&workdir, false);
+println!("wrapper run 3: project_root={:?}", project_root);
     let (ext_settings, int_settings) = match read_settings(&project_root)
     {
         Ok(tup) => tup,
@@ -77,6 +80,7 @@ pub fn run(input_args: Vec<String>) -> i32 {
         }
     };
 
+println!("wrapper run 4: workdir={:?}", workdir);
     let wrapper = Wrapper {
         root: root,
         config: &config,
@@ -87,6 +91,7 @@ pub fn run(input_args: Vec<String>) -> i32 {
 
     args.insert(0, format!("vagga {}", cmd));
 
+println!("wrapper run 5: cmd={:?}", cmd);
     let result = match &cmd[..] {
         "_build_shell" => Ok(debug::run_interactive_build_shell(&wrapper)),
         "_check_overlayfs_support" => Ok(debug::check_overlayfs(&wrapper)),

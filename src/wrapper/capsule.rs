@@ -79,6 +79,7 @@ pub fn symlink_busybox_commands() -> Result<(), String> {
     Dir::new("/bin").create()
         .map_err(|e| format!("Can't create /bin: {}", e))?;
     for cmd in BUSYBOX_COMMANDS {
+println!("symlink: cmd={:?}", cmd);
         symlink("/vagga/bin/busybox", format!("/bin/{}", cmd))
             .map_err(|e| format!("Error symlinking {:?}: {}", cmd, e))?;
     }

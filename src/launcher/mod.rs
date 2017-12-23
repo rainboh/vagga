@@ -62,7 +62,7 @@ fn check_export(cmd: &String) -> Option<String> {
         None => Some(cmd.clone()),
     }
 }
-
+use wrapper::setup;
 pub fn run(input_args: Vec<String>) -> i32 {
     let mut err = stderr();
 
@@ -279,6 +279,11 @@ pub fn run(input_args: Vec<String>) -> i32 {
             underscore::version_hash(&context, &cname, args)
         }
         "_build_shell" | "_clean" | "_check_overlayfs_support" => {
+// if let Err(text) = setup::setup_base_filesystem(&context.config_dir, &context.ext_settings)
+// {
+//     error!("Error setting base file system: {}", &text);
+//     return 122;
+// }
             underscore::passthrough(&context, &cname, args)
         }
         "_base_dir" => {

@@ -53,9 +53,12 @@ pub fn capture_stdout(mut cmd: Command) -> Result<Vec<u8>, String> {
     let mut child = cmd.spawn()
         .map_err(|e| format!("{}", e))?;
     let mut buf = Vec::with_capacity(1024);
-    child.stdout.take().unwrap().read_to_end(&mut buf)
-        .map_err(|e| format!("Error reading from pipe: {}", e))?;
+println!("capture_stdout 1: child.stdout={:?}", child.stdout);
+    let count = child.stdout.take().unwrap().read_to_end(&mut buf);
+println!("capture_stdout 2: count={:?}", count);
+        count.map_err(|e| format!("Error reading from pipe: {}", e))?;
     child.wait().map_err(|e| format!("Error waiting for child: {}", e))?;
+println!("capture_stdout 3: buf={:?}", buf);
     Ok(buf)
 }
 

@@ -189,12 +189,18 @@ fn make_mountpoint(project_root: &Path) -> Result<(), String> {
 pub fn setup_base_filesystem(project_root: &Path, settings: &MergedSettings)
     -> Result<(), String>
 {
+println!("setup_base_filesystem 1: project_root={:?}",project_root);
     let mnt_dir = project_root.join(".vagga/.mnt");
+info!("setup_base_filesystem 1: mnt_dir={:?}", mnt_dir);
     make_mountpoint(project_root)?;
-    Tmpfs::new(&mnt_dir).size_bytes(100 << 20).mount()
+    let t = Tmpfs::new(&mnt_dir);
+info!("setup_base_filesystem 2: tmpfs={:?}", t);
+    t.size_bytes(100 << 20).mount()
          .map_err(|e| format!("{}", e))?;
 
     let proc_dir = mnt_dir.join("proc");
+info!("setup_base_filesystem 3: proc_dir={:?}", proc_dir);
+
     try_msg!(Dir::new(&proc_dir).create(),
              "Error creating /proc: {err}");
     mount_proc(&proc_dir)?;
@@ -223,6 +229,7 @@ pub fn setup_base_filesystem(project_root: &Path, settings: &MergedSettings)
     let bin_dir = vagga_dir.join("bin");
     try_msg!(Dir::new(&bin_dir).create(),
              "Error creating /vagga/bin: {err}");
+info!("setup_base_filesystem 4: current_exe={:?}", current_exe().unwrap().parent().unwrap());
     try_msg!(BindMount::new(&current_exe().unwrap().parent().unwrap(),
                             &bin_dir)
              .readonly(true)
@@ -298,6 +305,8 @@ pub fn setup_base_filesystem(project_root: &Path, settings: &MergedSettings)
     unmount(&Path::new("/work/.vagga/.mnt"))
          .map_err(|e| format!("Error unmounting `.vagga/.mnt`: {}", e))?;
     unmount(&Path::new("/vagga/old_root"))?;
+
+println!("setup_base_filesystem END");
 
     Ok(())
 }

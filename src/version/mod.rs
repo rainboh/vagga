@@ -18,9 +18,10 @@ pub use self::error::Error;
 
 
 pub fn run(input_args: Vec<String>) -> i32 {
+println!("version_run: input_args={:?}", input_args);
     let mut container: String = "".to_string();
     let mut settings: Settings = Default::default();
-    let mut debug_info = false;
+    let mut debug_info = true;
     let mut dump = false;
     {
         let mut ap = ArgumentParser::new();
