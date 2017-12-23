@@ -25,7 +25,8 @@ anymap = "0.11.1"
 matches = "0.1.6"
 regex = "0.2.1"
 scan_dir = "0.3.1"
-libmount = { version="0.1.7", optional=true }
+#libmount = { version="0.1.7", optional=true }
+libmount  = { git = "https://github.com/rainboh/libmount", branch = "support-target-arm", optional=true }
 zip = "0.1"
 xz2 = "0.1.0"
 tar = "0.4.8"
@@ -37,9 +38,11 @@ quick-error = "1.2.0"
 docopt = "0.8.1"
 quire = "0.3.1"
 lazy_static = "0.2.2"
-dir-signature = { version="0.2.3", optional=true }
+# dir-signature = { version="0.2.3", optional=true }
+dir-signature = { git = "https://github.com/rainboh/dir-signature.git", branch = "support-target-armv7", optional=true }
 itertools = "0.6.1"
-git2 = { version="0.6.6", default-features=false }
+#git2 = { version="0.6.6", default-features=false }
+git2 = { path="../git2-rs", default-features=false }
 path-filter = { version = "0.1.0", path = "path_filter"}
 serde = { version = "1.0.11", features = ["rc"] }
 serde_json = "1.0.2"
