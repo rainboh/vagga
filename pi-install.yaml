@@ -1,0 +1,29 @@
+---
+- hosts: pi
+  tasks:
+    # - name: test connection
+    #   ping:
+    - name: create temporary install directory
+      tempfile:
+        state: directory
+        suffix: .install-vagga
+      register: tmp_dir
+    - debug: msg="{{ tmp_dir.path }}"
+    # http://www.mydailytutorials.com/how-to-copy-files-and-directories-in-ansible-using-copy-and-fetch-modules/
+    - name: copy vagga to remote
+      copy:
+        src: target/arm-unknown-linux-musleabihf/release/vagga
+        dest: "{{ tmp_dir.path }}" 
+    - name: copy 'completions' directory to remote
+      copy:
+        src: completions
+        dest: "{{ tmp_dir.path }}"
+    - name: download alpine binaries needed by vagga at runtime
+      script: fetch_binaries.sh armhf
+      args:
+        chdir: "{{ tmp_dir.path }}"
+    - name: run vagga install script
+      script: install.sh armhf
+      become: yes
+      args:
+        chdir: "{{ tmp_dir.path }}"
